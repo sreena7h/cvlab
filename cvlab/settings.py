@@ -9,18 +9,25 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import environ
 from pathlib import Path
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+root = environ.Path(__file__) - 2
+env = environ.Env(
+    # set casting, default value
+    DEBUG=(bool, False)
+)
+environ.Env.read_env(root('.env'))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-q=7w%_c99jkowpw(!xv#66+(r%3*l6_$_zrcn48@prxj4#6(8#'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,6 +44,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'user',
+    'core',
+
+    'rest_framework',
+    'rest_auth',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +63,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'cvlab.urls'
+AUTH_USER_MODEL = env('AUTH_USER_MODEL')
 
 TEMPLATES = [
     {
@@ -75,11 +89,14 @@ WSGI_APPLICATION = 'cvlab.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': env('ENGINE'),
+        'HOST': env('HOST'),
+        'PORT': int(env('PORT')),
+        'NAME': env('NAME'),
+        'USER': env('USER'),
+        'PASSWORD': env('PASSWORD'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
