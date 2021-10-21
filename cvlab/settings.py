@@ -9,12 +9,14 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
+import os
+from datetime import timedelta
+
 import environ
-from pathlib import Path
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 root = environ.Path(__file__) - 2
 env = environ.Env(
     # set casting, default value
@@ -140,3 +142,110 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+BROKER_URL = env('BROKER_URL')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND')
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = env('CELERY_TIMEZONE')
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "root": {"level": "INFO",
+             "handlers": ["console", "default"]
+             },
+    "formatters": {
+        "django.server": {
+            "()": "django.utils.log.ServerFormatter",
+            "format": "[{server_time}] {message}",
+            "style": "{",
+        },
+        "json": {
+            "()": "core.logging.JsonFormatter",
+            "datefmt": "%Y-%m-%dT%H:%M:%SZ",
+            "format": (
+                    "%(asctime)s %(levelname)s %(lineno)s %(message)s %(name)s "
+                    + "%(pathname)s %(process)d %(threadName)s"
+            ),
+        },
+        "verbose": {
+            "format": (
+                "%(levelname)s %(name)s %(message)s [PID:%(process)d:%(threadName)s]"
+            )
+        },
+    },
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse"
+        },
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue"
+        }
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "filters": ["require_debug_true"],
+            "class": "logging.StreamHandler",
+            "formatter": "verbose"
+        },
+        "development_log": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR + "/logs/debug.log",
+            "formatter": "verbose" if DEBUG else "json",
+            "filters": ["require_debug_true"],
+        },
+        "default": {
+            "level": "DEBUG",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": BASE_DIR + "/logs/cvlab.log",
+            "formatter": "verbose" if DEBUG else "json",
+            "filters": ["require_debug_false"],
+            "when": "W6",
+            "backupCount": 2,
+        },
+        "django": {
+            "level": "DEBUG",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": BASE_DIR + "/logs/cvlab_django.log",
+            "formatter": "verbose" if DEBUG else "json",
+            "filters": ["require_debug_false"],
+            "when": "W6",
+            "backupCount": 2,
+        },
+        "django.server": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR + "/logs/error.log",
+            "formatter": "django.server" if DEBUG else "json",
+            "filters": ["require_debug_false"],
+        },
+
+    },
+    "loggers": {
+        "django": {
+            "level": "INFO",
+            "propagate": True,
+            "handlers": ["console", "development_log", "django"]
+        },
+        "django.server": {
+            "level": "ERROR",
+            "propagate": False,
+            "handlers": ["django.server"],
+        },
+        "chef_alacarte": {
+            "level": "DEBUG",
+            "propagate": True,
+            "handlers": ["console", "development_log", "default"]
+        },
+    },
+}
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=int(env('ACCESS_RECOVERY_TIME'))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(env('REFRESH_RECOVERY_TIME')))
+}
