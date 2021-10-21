@@ -2,8 +2,8 @@ from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .models import AvailableTimeSlots
-from .serializers import AvailabilitySerializer
+from .models import AvailableTimeSlots, Interview
+from .serializers import AvailabilitySerializer, ScheduleSerializer
 
 
 class Availability(generics.ListCreateAPIView):
@@ -30,18 +30,28 @@ class Availability(generics.ListCreateAPIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
 
-class GetSchedule(generics.CreateAPIView):
+class Schedule(generics.ListCreateAPIView):
     permission_classes = (AllowAny,)
-    serializer_class = AvailabilitySerializer
+    serializer_class = ScheduleSerializer
 
     def get_queryset(self):
-        queryset = AvailableTimeSlots.objects.filter(user_id=self.kwargs.get('pk')).order_by('-from_time', '-to_time')
+        queryset = Interview.objects.filter(candidate_id=self.kwargs.get('pk'))
         return queryset
 
-    def create(self, request, *args, **kwargs):
-        """ List Availability of Examiners or Candidates """
-        return self.create(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        """ Get the scheduled time """
+        return self.list(request, *args, **kwargs)
 
+    def post(self, request, *args, **kwargs):
+        """ Create Schedule for interview """
+        data = request.data
+        data['user'] = self.kwargs.get('pk')
+        serializer = self.serializer_class(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(dict(data=serializer.data, status=status.HTTP_201_CREATED), status=status.HTTP_201_CREATED)
+        else:
+            return Response(dict(status=status.HTTP_400_BAD_REQUEST, errors=serializer.errors),
+                            status=status.HTTP_400_BAD_REQUEST)
 
-class UpdateSchedule(generics.RetrieveUpdateDestroyAPIView):
-    pass
+    # todo: update and delte

@@ -8,6 +8,7 @@ class AvailableTimeSlots(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     from_time = models.DateTimeField()
     to_time = models.DateTimeField()
+    picked_status = models.BooleanField(default=False)
 
     objects = models.Manager()
 
@@ -16,7 +17,8 @@ class AvailableTimeSlots(models.Model):
 
 
 class Interview(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    candidate = models.OneToOneField(User, on_delete=models.CASCADE)
+    interviewer = models.IntegerField(null=True, blank=True) # setting this as integer field so as to remove the clashes issue
     slot = models.ForeignKey(AvailableTimeSlots, on_delete=models.SET_NULL, null=True, blank=True)
     created_time = models.DateTimeField('date created', auto_now_add=True)
     updated_time = models.DateTimeField('date updated', auto_now=True)

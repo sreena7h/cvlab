@@ -27,15 +27,43 @@ class AvailabilitySerializer(serializers.ModelSerializer):
         return obj
 
 
-class GetScheduleSerializer(serializers.ModelSerializer):
+class ScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interview
-        fields = ['user', 'schedule']
+        fields = ['candidate', 'interviewer', 'slot']
 
     def validate(self, attrs):
+        Interview.objects.filter(candidate=attrs['user']).update(slot=None)
+        slots = AvailableTimeSlots.objects.filter(user=attrs['user']).order_by('from_time')
+
+        if slots.filter(user__is_staff=True):
+            raise ValidationError('Only candidates can request for schedule')
+
+        if not slots:
+            raise ValidationError('Please pick some available time slots')
+
+        interviewer_slots = AvailableTimeSlots.objects.filter(user__is_staff=True, picked_status=False)
+
+        flag = False
+        for slot in slots:
+            possible_schedules = interviewer_slots.filter(from_time__gte=slot.from_time,
+                                                          to_time__lte=slot.to_time).order_by('from_time')
+            if possible_schedules:
+                flag = True
+                attrs['slot'] = slot
+                AvailableTimeSlots.objects.filter(pk=attrs['slot']).update(picked_status=True)
+                AvailableTimeSlots.objects.filter(pk=possible_schedules[0]).update(picked_status=True)
+                attrs['interviewer'] = possible_schedules[0].id
+                break
+
+        if not flag:
+            raise ValidationError('No schedules available, Add or update time slots')
+
         return attrs
 
     def create(self, validated_data):
-        obj = Interview(**validated_data)
+        obj = Interview.objects.get_or_create(candidate=validated_data['user'])
+        obj.interviewer = validated_data['interviewer']
+        obj.slot = validated_data['slot']
         obj.save()
         return obj

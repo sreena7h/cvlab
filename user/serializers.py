@@ -17,7 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         validated_data['username'] = validated_data['email']
         user = User(**validated_data)
-        Interview.objects.get_or_create(user=user)
+        Interview.objects.get_or_create(candidate=user)
         user.set_password(password)
         user.save()
         return user
