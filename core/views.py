@@ -7,7 +7,7 @@ from .serializers import AvailabilitySerializer, ScheduleSerializer
 
 
 class Availability(generics.ListCreateAPIView):
-    permission_classes = (AllowAny, )
+    permission_classes = (IsAuthenticated, )
     serializer_class = AvailabilitySerializer
 
     def get_queryset(self):
@@ -31,7 +31,7 @@ class Availability(generics.ListCreateAPIView):
 
 
 class Schedule(generics.ListCreateAPIView):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
     serializer_class = ScheduleSerializer
 
     def get_queryset(self):
