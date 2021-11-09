@@ -27,7 +27,7 @@ class SignUp(generics.CreateAPIView):
 
 
 class CreateInterviewer(generics.ListCreateAPIView):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_staff=True).order_by('email')
 
@@ -54,7 +54,7 @@ class CreateInterviewer(generics.ListCreateAPIView):
 
 
 class ListUsers(generics.ListAPIView):
-    permission_classes = (AllowAny, )
+    permission_classes = (IsAuthenticated,)
     serializer_class = UserSerializer
     queryset = User.objects.filter(is_staff=False).order_by('username')
 
